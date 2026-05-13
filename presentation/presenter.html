@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<title>🎙 Presenter Notes</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',sans-serif;background:#0f1117;color:#e8eaf6;height:100vh;display:flex;flex-direction:column;overflow:hidden}
+header{background:#1a1d2e;border-bottom:1px solid rgba(124,58,237,.3);padding:12px 20px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.title{font-weight:700;font-size:.95rem;color:#a78bfa}
+.timer{font-size:1.4rem;font-weight:700;color:#34d399;font-variant-numeric:tabular-nums;letter-spacing:.05em}
+.timer.warn{color:#fbbf24}
+.timer.over{color:#f87171}
+.hdr-btns{display:flex;gap:8px}
+.hdr-btns button{background:rgba(124,58,237,.2);border:1px solid rgba(124,58,237,.3);color:#a78bfa;padding:5px 12px;border-radius:6px;cursor:pointer;font-size:.78rem;font-family:'Inter',sans-serif}
+.hdr-btns button:hover{background:rgba(124,58,237,.4);color:#fff}
+.slide-info{background:#13151f;border-bottom:1px solid rgba(255,255,255,.07);padding:10px 20px;display:flex;align-items:center;gap:16px;flex-shrink:0}
+.slide-badge{background:linear-gradient(135deg,#7c3aed,#5b21b6);color:#fff;font-size:.72rem;font-weight:700;padding:3px 10px;border-radius:6px}
+.slide-title-lbl{font-weight:700;font-size:.95rem;color:#e8eaf6}
+.slide-sub{font-size:.78rem;color:#6b7a99;margin-left:auto}
+.main{display:flex;flex:1;overflow:hidden}
+.notes-panel{flex:1;overflow-y:auto;padding:20px 24px}
+.notes-panel::-webkit-scrollbar{width:4px}
+.notes-panel::-webkit-scrollbar-thumb{background:rgba(124,58,237,.3);border-radius:99px}
+.script-label{font-size:.68rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#4a5568;margin-bottom:10px}
+.script{font-size:.95rem;line-height:1.8;color:#c5cae9;background:rgba(124,58,237,.05);border:1px solid rgba(124,58,237,.15);border-radius:10px;padding:18px 20px;margin-bottom:16px}
+.script strong{color:#a78bfa}
+.script em{color:#34d399;font-style:normal;font-weight:600}
+.tips-label{font-size:.68rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#4a5568;margin-bottom:8px}
+.tips{display:flex;flex-direction:column;gap:6px}
+.tip{background:rgba(6,182,212,.05);border:1px solid rgba(6,182,212,.15);border-radius:8px;padding:10px 14px;font-size:.82rem;color:#9aa3b2;line-height:1.5}
+.tip .tip-icon{color:#06b6d4;margin-right:6px}
+.next-panel{width:200px;border-left:1px solid rgba(255,255,255,.07);padding:14px;flex-shrink:0;display:flex;flex-direction:column;gap:10px;overflow-y:auto}
+.next-label{font-size:.68rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#4a5568}
+.next-card{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:10px;font-size:.8rem;color:#9aa3b2;line-height:1.4}
+.next-card strong{color:#e8eaf6;display:block;margin-bottom:4px;font-size:.82rem}
+.nav-row{background:#13151f;border-top:1px solid rgba(255,255,255,.07);padding:12px 20px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.nav-row button{background:linear-gradient(135deg,#7c3aed,#5b21b6);border:none;color:#fff;padding:9px 22px;border-radius:8px;cursor:pointer;font-size:.85rem;font-weight:600;font-family:'Inter',sans-serif;transition:all .2s}
+.nav-row button:hover{opacity:.85}
+.nav-row button.ghost{background:rgba(255,255,255,.06);color:#9aa3b2;border:1px solid rgba(255,255,255,.1)}
+.progress-row{display:flex;gap:4px;align-items:center}
+.prog-dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.15);transition:all .3s;cursor:pointer}
+.prog-dot.done{background:#7c3aed}
+.prog-dot.active{background:#a78bfa;width:20px;border-radius:4px}
+</style>
+</head>
+<body>
+<header>
+  <div class="title">🎙 Presenter Notes — ADK + Ollama</div>
+  <div class="timer" id="timer">00:00</div>
+  <div class="hdr-btns">
+    <button onclick="toggleTimer()">⏱ Start/Stop</button>
+    <button onclick="resetTimer()">↺ Reset</button>
+  </div>
+</header>
+
+<div class="slide-info">
+  <span class="slide-badge" id="slideNum">1 / 12</span>
+  <span class="slide-title-lbl" id="slideTitle">Title</span>
+  <span class="slide-sub" id="slideTime">~0:30</span>
+</div>
+
+<div class="main">
+  <div class="notes-panel">
+    <div class="script-label">📢 Your Script</div>
+    <div class="script" id="script"></div>
+    <div class="tips-label">💡 Presenter Tips</div>
+    <div class="tips" id="tips"></div>
+  </div>
+  <div class="next-panel">
+    <div class="next-label">Up Next</div>
+    <div class="next-card" id="nextCard"></div>
+    <div class="next-label" style="margin-top:12px">Progress</div>
+    <div class="progress-row" id="dots"></div>
+  </div>
+</div>
+
+<div class="nav-row">
+  <button class="ghost" onclick="go(cur-1)">← Previous</button>
+  <span style="font-size:.8rem;color:#6b7a99" id="navLabel"></span>
+  <button onclick="go(cur+1)">Next →</button>
+</div>
+
+<script>
+const SLIDES = [
+  {
+    title: "Title Slide",
+    time: "~0:30",
+    script: `Good morning/afternoon everyone. Today I'm presenting <strong>ADK + Ollama</strong> — a fully local multi-agent AI system built using <em>Google Agent Development Kit patterns</em>, powered by Ollama and Llama 3.2 running entirely on this machine.\n\nWhat makes this special? No cloud, no API keys, no cost — just powerful AI running right here. Let me walk you through how we built it and what it can do.`,
+    tips: ["Pause after saying the title — let it sink in","Gesture toward your screen/demo window","Keep energy high for the opening"]
+  },
+  {
+    title: "What is an LLM?",
+    time: "~1:30",
+    script: `Let me start with the foundation. An <strong>LLM — Large Language Model</strong> — is a neural network trained on massive amounts of text. Books, code, websites, papers. By learning statistical patterns across billions of words, it develops the ability to generate coherent, knowledgeable text.\n\nThe key mechanism is <em>next-token prediction</em>: given everything said so far, what word comes next? Repeat that thousands of times and you get a paragraph. It sounds simple — but the emergent results are remarkable: reasoning, coding, summarizing, translation.\n\n<strong>But there's a critical limitation.</strong> When you ask an LLM "What is 17 × 23?", it doesn't calculate — it guesses based on patterns. It might get it right, or it might confidently give you the wrong answer. LLMs alone cannot take actions in the real world.`,
+    tips: ["Pause on 'predicts the next token' — this surprises many people", "Use the math example: 'If I ask it 17 times 23, it might say 391... or it might say 396'", "The limitation sets up WHY ADK exists"]
+  },
+  {
+    title: "What is Google ADK?",
+    time: "~1:30",
+    script: `This is where <strong>Google ADK — the Agent Development Kit</strong> — comes in. ADK is Google's open-source framework that transforms an LLM from a text predictor into an <em>agent that can act</em>.\n\nADK gives the LLM access to <strong>tools</strong> — real Python functions. A calculator tool, a web search tool, a code runner. The LLM can call these tools and use their results to form accurate answers.\n\nADK also implements the <em>agentic loop</em>: Reason → Act → Observe → Reason again. The model thinks about a task, takes an action, sees the result, and continues until the goal is achieved. And ADK supports <strong>multi-agent systems</strong> — specialized agents that collaborate, with an orchestrator coordinating the team.`,
+    tips: ["Say: 'ADK is the bridge between the LLM's brain and the real world'", "Emphasize it's open source — anyone can use it", "Mention it works with Gemini, GPT, Claude — and local models like ours"]
+  },
+  {
+    title: "LLM + ADK = Real Intelligence",
+    time: "~1:00",
+    script: `So the equation is simple: <strong>LLM + ADK = Agent</strong>. An LLM alone predicts text. ADK alone is just infrastructure. Together they create something powerful.\n\nHere's how it works in practice. You ask: "What is 17 × 23?" ADK passes your question to the LLM with a system prompt that says: 'You have a calculator tool. Use it like this: TOOL_CALL: {"tool": "calculator"}'.\n\nThe LLM, instead of guessing, <em>decides to use the tool</em> and outputs that structured tag. ADK intercepts it, runs the Python function, gets 391, and feeds it back. The LLM then says: "17 × 23 = <strong>391</strong>" — correct, every time.\n\nThis is the core insight of agentic AI: <em>give the LLM access to real tools, and it stops hallucinating about things it can verify.</em>`,
+    tips: ["This slide is the 'aha moment' — pause and let it land", "Trace the flow: question → tool call → result → answer", "Say: 'The LLM becomes a coordinator, not just a predictor'"]
+  },
+  {
+    title: "Why This Demonstration?",
+    time: "~1:00",
+    script: `We had three options to demonstrate. The <strong>ADK Playground</strong> uses Gemini cloud — it works but relies on a Google API key and sends data to the cloud. The <strong>Ollama Chat Demo</strong> is local but has no agents, no tools, no backend.\n\nWe chose the <em>ADK + Ollama system</em> because it's the most complete: real ADK agent patterns, a real Python backend, actual tool execution, and it runs 100% offline. It's the strongest technical demonstration.`,
+    tips: ["Point to each row of the comparison table","Emphasize 'real' vs 'simulated' — this is the key differentiator","You can say: 'We wanted something we could actually be proud of'"]
+  },
+  {
+    title: "What We Built",
+    time: "~1:00",
+    script: `Here's what the system includes. <strong>Three specialized agents</strong> — each with its own persona, system prompt, and set of tools. <strong>Five real tools</strong> — not mocked, they actually execute code and return results.\n\nThe backend uses <em>FastAPI with Server-Sent Events</em> so responses stream token by token, just like ChatGPT. And the frontend is pure HTML and JavaScript — no npm, no React, no build tools. You open it in a browser and it works.`,
+    tips: ["Use your fingers to count the 5 items","Stress 'real tools' — audiences always appreciate this","Mention the streaming: 'You see the AI thinking in real time'"]
+  },
+  {
+    title: "System Architecture",
+    time: "~1:30",
+    script: `Let me walk through the architecture from left to right. The <strong>browser frontend</strong> runs on port 8081 — this is what the user sees. It sends requests to our <em>FastAPI backend</em> on port 8000.\n\nThe backend routes to one of three agents. Each agent can call tools — which are real Python functions executing on this machine. The LLM responses come from <em>Ollama on port 11434</em>, running Llama 3.2 locally.\n\nNo request ever leaves this computer.`,
+    tips: ["Trace the arrow flow with your cursor as you speak","Pause at Ollama: 'This is the magic — a 2GB model running right here'","Invite the audience to ask about any component"]
+  },
+  {
+    title: "Technologies Used",
+    time: "~1:00",
+    script: `The tech stack is deliberately straightforward. <strong>Python and FastAPI</strong> handle the backend — FastAPI gives us async streaming out of the box. <strong>Ollama</strong> manages the LLM runtime — one command to pull a model and it's ready.\n\nWe follow <em>ADK patterns</em> for agent structure without requiring Google API credentials. <strong>httpx</strong> handles async communication with Ollama. And the frontend is zero-dependency — just HTML, CSS, and JavaScript.`,
+    tips: ["You can mention: 'Every piece of this stack is open source'","If anyone asks about cost: 'Total cost to run this: $0'","Keep this slide brief — move to agents quickly"]
+  },
+  {
+    title: "Three Specialized Agents",
+    time: "~1:30",
+    script: `We have three agents, each with a unique role. The <strong>Research Agent</strong> is a knowledge synthesizer — it searches the knowledge base, does calculations, and analyzes text. It's your go-to for Q&A and fact-finding.\n\nThe <strong>Code Agent</strong> is a Python specialist that doesn't just write code — it <em>actually runs it</em> and shows the real output. The <strong>Orchestrator</strong> is the most impressive — it coordinates the other agents, breaks complex tasks into subtasks, and uses all five tools simultaneously.`,
+    tips: ["For the live demo, use the Orchestrator for maximum impact","Say: 'The Orchestrator is like a project manager for AI'","You can click on each agent card to show it's interactive"]
+  },
+  {
+    title: "5 Real Execution Tools",
+    time: "~1:00",
+    script: `The tools are what make this truly agentic. The <strong>calculator</strong> evaluates real math — not an estimate, actual computation. The <strong>knowledge base search</strong> returns structured information about AI topics.\n\nThe <em>Python runner</em> is particularly impressive — it executes code using subprocess and returns the actual stdout. The <strong>time tool</strong> returns structured datetime JSON. And the <strong>text analyzer</strong> counts words, sentences, and estimates reading time.\n\nAll five are real Python functions — not simulated.`,
+    tips: ["Emphasize 'real' execution repeatedly","You can say: 'When the agent runs Python code, it's the same as you typing python in a terminal'","Good lead-in to the code slides coming next"]
+  },
+  {
+    title: "Code: Agent Definition",
+    time: "~1:30",
+    script: `Let's look at how agents are defined. An agent is a Python dictionary with a <strong>name, model, and system prompt</strong>. The system prompt is where we engineer the agent's behavior and teach it how to use tools.\n\nThe key innovation is the <em>TOOL_CALL pattern</em>. When the agent wants to use a tool, it outputs a special JSON tag in its response text. Our parse_tool_calls function uses a regex to extract these tags. This means <strong>any LLM that can follow instructions becomes a tool-using agent</strong> — no special SDK required.`,
+    tips: ["Point to the TOOL_CALL line — this is the 'aha' moment","Say: 'We're teaching the model to speak a language our backend understands'","Mention this is inspired by how Google ADK works internally"]
+  },
+  {
+    title: "Code: Tool-Use Loop",
+    time: "~1:30",
+    script: `This is the heart of the system — the agentic loop in app.py. Here's what happens: we stream tokens from Ollama one by one. When the full response arrives, we check for tool calls using our regex parser.\n\nIf tool calls exist, we <em>execute the real tools</em> and feed the results back to the model as context. Then we ask the model to continue. This loop repeats up to <strong>five times</strong>, allowing the agent to chain multiple tool calls to solve complex problems.\n\nThroughout this process, every token is streamed to the browser in real time via Server-Sent Events.`,
+    tips: ["Trace through the for loop line by line","Pause at 'yield sse' — explain this is what makes streaming work","Say: 'This is exactly the ReAct pattern from the research literature'"]
+  },
+  {
+    title: "Frontend Features",
+    time: "~1:00",
+    script: `The frontend was deliberately built with no framework. Opening it in a browser is enough — no npm install, no build step. On load it polls <strong>/api/health</strong> and shows the live connection status.\n\nAgent cards are dynamically loaded from the API — if you add a new agent to the backend, it appears automatically. The <em>SSE reader</em> processes tokens as they arrive, giving that real-time streaming feel. And when a tool is called, you see the tool name, arguments, and result appear inline — you can watch the agent think.`,
+    tips: ["Switch to the browser during this slide to show it live","Point to the green 'System Online' indicator","Show a quick prompt to demonstrate the SSE streaming effect"]
+  },
+  {
+    title: "Request Lifecycle",
+    time: "~1:00",
+    script: `Let me walk through a complete request. You type a message and hit Enter. The frontend posts to <strong>/api/chat/research</strong>. FastAPI builds the full conversation history and injects the system prompt.\n\nOllama begins streaming tokens. If the model outputs a TOOL_CALL tag, the backend intercepts it, runs the Python function, and feeds the result back. This continues until the model produces its final answer, which streams to your browser token by token.\n\nThe entire cycle — from your keyboard to the LLM to the tools and back — happens <em>locally on this machine</em>.`,
+    tips: ["Trace the numbered steps with your finger/cursor","Say: 'Every one of these steps happens in milliseconds on this laptop'","Good moment to say: 'Want to see it live? Let's demo'"]
+  },
+  {
+    title: "Key Takeaways",
+    time: "~0:45",
+    script: `To close: we've demonstrated that production-quality agentic AI can run entirely locally. <strong>Privacy</strong> — no data ever leaves this machine. <strong>Zero cost</strong> — no API fees, no usage limits. <strong>Real ADK patterns</strong> — multi-agent orchestration, tool calling, agentic reasoning loops.\n\nAnd it's <em>production-ready</em> — FastAPI backend, SSE streaming, full conversation history. This isn't a toy — it's a foundation you could deploy in a real application tomorrow.\n\nThank you. I'm happy to take any questions or run a live demo of any feature.`,
+    tips: ["Slow down for the conclusion — let each point land","Make eye contact with the audience (not the screen)","End with: 'Any questions?' and be confident — you built this!"]
+  }
+];
+
+const NEXT_TITLES = ["What is an LLM?","What is ADK?","LLM + ADK = Agents","Why This Demo?","What We Built","Architecture","Tech Stack","Three Agents","Five Tools","Code: agents.py","Code: app.py","Frontend","Request Flow","Conclusion","— End —"];
+
+let cur = 0;
+let timerSec = 0;
+let timerRunning = false;
+let timerInterval = null;
+let lastTs = 0;
+
+// Method 1: BroadcastChannel (instant, same-origin)
+let ch;
+try {
+  ch = new BroadcastChannel('presenter_sync');
+  ch.onmessage = e => {
+    if(e.data.slide !== undefined) render(e.data.slide);
+  };
+} catch(e) { ch = null; }
+
+// Method 2: localStorage polling (fallback, works cross-tab always)
+setInterval(() => {
+  try {
+    const ts = parseInt(localStorage.getItem('presenter_ts') || '0');
+    if(ts !== lastTs) {
+      lastTs = ts;
+      const idx = parseInt(localStorage.getItem('presenter_slide') || '0');
+      if(idx !== cur) render(idx);
+    }
+  } catch(e) {}
+}, 300);
+
+function render(idx) {
+  cur = idx;
+  const s = SLIDES[idx];
+  document.getElementById('slideNum').textContent = (idx+1) + ' / ' + SLIDES.length;
+  document.getElementById('slideTitle').textContent = s.title;
+  document.getElementById('slideTime').textContent = s.time;
+  document.getElementById('navLabel').textContent = `Slide ${idx+1} of ${SLIDES.length}`;
+  document.getElementById('script').innerHTML = s.script.replace(/\n/g,'<br>');
+  document.getElementById('tips').innerHTML = s.tips.map(t=>`<div class="tip"><span class="tip-icon">💡</span>${t}</div>`).join('');
+  const next = NEXT_TITLES[idx+1] || '—';
+  document.getElementById('nextCard').innerHTML = `<strong>${next}</strong>${idx+1 < SLIDES.length ? SLIDES[idx+1].script.slice(0,80)+'...' : 'End of presentation'}`;
+  // dots
+  const dots = document.getElementById('dots');
+  dots.innerHTML = SLIDES.map((_,i)=>`<div class="prog-dot ${i<idx?'done':i===idx?'active':''}" onclick="go(${i})"></div>`).join('');
+}
+
+function go(n) {
+  n = Math.max(0, Math.min(SLIDES.length-1, n));
+  render(n);
+  // Notify slides.html to follow
+  if(ch) ch.postMessage({slide: n, fromPresenter: true});
+  try {
+    localStorage.setItem('presenter_slide_back', n);
+    localStorage.setItem('presenter_ts_back', Date.now());
+  } catch(e) {}
+}
+
+function toggleTimer() {
+  timerRunning = !timerRunning;
+  if(timerRunning) timerInterval = setInterval(tick, 1000);
+  else clearInterval(timerInterval);
+}
+function resetTimer() { timerSec = 0; timerRunning = false; clearInterval(timerInterval); updateTimer(); }
+function tick() { timerSec++; updateTimer(); }
+function updateTimer() {
+  const m = String(Math.floor(timerSec/60)).padStart(2,'0');
+  const s = String(timerSec%60).padStart(2,'0');
+  const el = document.getElementById('timer');
+  el.textContent = m+':'+s;
+  el.className = 'timer' + (timerSec>1200?' over':timerSec>900?' warn':'');
+}
+
+document.addEventListener('keydown', e => {
+  if(e.key==='ArrowRight'||e.key===' ') go(cur+1);
+  if(e.key==='ArrowLeft') go(cur-1);
+});
+
+render(0);
+</script>
+</body>
+</html>

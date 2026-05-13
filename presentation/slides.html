@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<title>ADK + Ollama — Presentation</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=JetBrains+Mono&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',sans-serif;background:#060810;color:#e8eaf6;height:100vh;overflow:hidden}
+.bg{position:fixed;inset:0;background:radial-gradient(ellipse at 20% 20%,rgba(124,58,237,.09),transparent 55%),radial-gradient(ellipse at 80% 80%,rgba(6,182,212,.06),transparent 55%);pointer-events:none}
+.deck{width:100%;height:100%;position:relative}
+.slide{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:60px 80px;opacity:0;pointer-events:none;transition:opacity .45s,transform .45s;transform:translateX(60px)}
+.slide.active{opacity:1;pointer-events:all;transform:translateX(0)}
+.slide.prev{opacity:0;transform:translateX(-60px)}
+.slide>*{position:relative;z-index:1}
+.bar{position:fixed;top:0;left:0;height:4px;background:linear-gradient(90deg,#7c3aed,#06b6d4);transition:width .4s;z-index:50}
+.tag{font-size:.7rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:#a78bfa;background:rgba(124,58,237,.12);border:1px solid rgba(124,58,237,.3);padding:5px 14px;border-radius:99px;margin-bottom:18px;display:inline-block}
+h1{font-size:clamp(2.5rem,5vw,4rem);font-weight:900;line-height:1.1;margin-bottom:20px;background:linear-gradient(135deg,#e8eaf6 0%,#a78bfa 50%,#06b6d4 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+h2{font-size:clamp(1.8rem,3.5vw,2.8rem);font-weight:800;margin-bottom:16px;background:linear-gradient(135deg,#fff,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{font-size:1rem;color:#6b7a99;margin-bottom:30px;text-align:center}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;width:100%;max-width:1000px;margin-top:16px}
+.card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:22px 18px;transition:all .3s}
+.card:hover{background:rgba(124,58,237,.08);border-color:rgba(124,58,237,.3);transform:translateY(-3px)}
+.card-icon{font-size:1.8rem;margin-bottom:10px}
+.card h3{font-size:.95rem;color:#e8eaf6;margin-bottom:6px;font-weight:700}
+.card p{font-size:.82rem;color:#6b7a99;line-height:1.5}
+.pills{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:24px}
+.pill{padding:8px 18px;border-radius:8px;font-size:.85rem;font-weight:600;border:1px solid}
+.p-purple{color:#a78bfa;border-color:rgba(124,58,237,.4);background:rgba(124,58,237,.08)}
+.p-cyan{color:#06b6d4;border-color:rgba(6,182,212,.4);background:rgba(6,182,212,.08)}
+.p-green{color:#34d399;border-color:rgba(52,211,153,.4);background:rgba(52,211,153,.08)}
+.p-amber{color:#fbbf24;border-color:rgba(251,191,36,.4);background:rgba(251,191,36,.08)}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:32px;width:100%;max-width:1000px;align-items:start}
+.list{list-style:none;display:flex;flex-direction:column;gap:12px;width:100%;max-width:900px}
+.list li{display:flex;align-items:flex-start;gap:12px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:10px;padding:14px 16px;font-size:.92rem;color:#9aa3b2;line-height:1.5}
+.list li strong{color:#e8eaf6;margin-right:6px}
+.list li .num{background:linear-gradient(135deg,#7c3aed,#06b6d4);color:#fff;font-size:.75rem;font-weight:700;padding:3px 8px;border-radius:6px;flex-shrink:0;margin-top:2px}
+.cmp-table{width:100%;border-collapse:collapse;max-width:860px;font-size:.88rem}
+.cmp-table th{background:rgba(124,58,237,.15);color:#a78bfa;padding:10px 14px;text-align:left;border-bottom:1px solid rgba(124,58,237,.3)}
+.cmp-table td{padding:10px 14px;border-bottom:1px solid rgba(255,255,255,.05);color:#9aa3b2}
+.cmp-table tr:hover td{background:rgba(255,255,255,.02)}
+.badge{display:inline-block;padding:2px 8px;border-radius:99px;font-size:.72rem;font-weight:700}
+.bg-g{background:rgba(52,211,153,.15);color:#34d399;border:1px solid rgba(52,211,153,.3)}
+.bg-r{background:rgba(248,113,113,.15);color:#f87171;border:1px solid rgba(248,113,113,.3)}
+.bg-y{background:rgba(251,191,36,.15);color:#fbbf24;border:1px solid rgba(251,191,36,.3)}
+pre.code{font-family:'JetBrains Mono',monospace;background:rgba(0,0,0,.45);border:1px solid rgba(124,58,237,.25);border-radius:10px;padding:20px 24px;font-size:.78rem;color:#a78bfa;line-height:1.8;white-space:pre;overflow-x:auto;width:100%;max-width:860px;text-align:left}
+.flow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:16px}
+.fbox{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:14px 18px;text-align:center;min-width:110px}
+.fbox .fi{font-size:1.4rem;margin-bottom:6px}
+.fbox .fl{font-size:.78rem;color:#9aa3b2}
+.arr{color:#a78bfa;font-size:1.3rem}
+.stat-row{display:flex;gap:40px;justify-content:center;flex-wrap:wrap;margin-top:20px}
+.stat .n{font-size:3.5rem;font-weight:900;background:linear-gradient(135deg,#a78bfa,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1}
+.stat .l{font-size:.85rem;color:#6b7a99;margin-top:6px}
+.nav{position:fixed;bottom:28px;right:28px;display:flex;gap:10px;z-index:100}
+.nav button{background:rgba(124,58,237,.2);border:1px solid rgba(124,58,237,.4);color:#a78bfa;padding:10px 20px;border-radius:10px;cursor:pointer;font-family:'Inter',sans-serif;font-size:.85rem;font-weight:600;transition:all .2s}
+.nav button:hover{background:rgba(124,58,237,.4);color:#fff}
+.slide-num{position:fixed;bottom:32px;left:50%;transform:translateX(-50%);font-size:.8rem;color:#4a5568;z-index:100}
+.presenter-btn{position:fixed;top:14px;right:14px;z-index:200;background:rgba(124,58,237,.2);border:1px solid rgba(124,58,237,.4);color:#a78bfa;padding:7px 16px;border-radius:8px;cursor:pointer;font-size:.8rem;font-family:'Inter',sans-serif}
+.presenter-btn:hover{background:rgba(124,58,237,.4);color:#fff}
+</style>
+</head>
+<body>
+<div class="bg"></div>
+<div class="bar" id="bar"></div>
+<button class="presenter-btn" onclick="openPresenter()">🎙 Presenter View</button>
+
+<div class="deck" id="deck">
+<!-- S1 Title -->
+<div class="slide active">
+  <div class="tag">LLM Demonstration · Google ADK</div>
+  <h1>ADK + Ollama</h1>
+  <p class="sub">Local Multi-Agent AI System — Powered by Llama 3.2</p>
+  <div class="pills">
+    <span class="pill p-purple">🔒 100% Private</span>
+    <span class="pill p-cyan">⚡ Zero API Cost</span>
+    <span class="pill p-green">🤖 Multi-Agent</span>
+    <span class="pill p-amber">🛠️ Real Tool Use</span>
+  </div>
+</div>
+<!-- S2 What is an LLM -->
+<div class="slide">
+  <div class="tag">Foundation · Large Language Models</div>
+  <h2>What is an LLM?</h2>
+  <div class="two-col" style="align-items:start;max-width:1000px;width:100%">
+    <ul class="list">
+      <li><span class="num">📖</span><div><strong>Trained on text</strong> — Billions of words from books, code, web pages. The model learns patterns and relationships between words.</div></li>
+      <li><span class="num">🎲</span><div><strong>Predicts next tokens</strong> — Given a prompt, the LLM predicts the most likely next word, one token at a time, until a complete answer forms.</div></li>
+      <li><span class="num">🧠</span><div><strong>Emergent reasoning</strong> — With enough scale, models develop abilities: summarizing, coding, answering questions, following instructions.</div></li>
+      <li><span class="num">⚠️</span><div><strong>Limitation</strong> — LLMs alone can only generate text. They cannot browse the web, run code, or take actions in the real world.</div></li>
+    </ul>
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <div class="card"><div class="card-icon">📝</div><h3>Prompt In</h3><p>"What is 17 × 23?"</p></div>
+      <div style="text-align:center;color:#a78bfa;font-size:1.5rem">↓</div>
+      <div class="card"><div class="card-icon">🤖</div><h3>Token Generation</h3><p>Model outputs tokens: "17 × 23 = 391"</p></div>
+      <div style="text-align:center;color:#a78bfa;font-size:1.5rem">↓</div>
+      <div class="card" style="border-color:rgba(248,113,113,.3)"><div class="card-icon">❌</div><h3>No Verification</h3><p>The model guesses — it cannot actually calculate</p></div>
+    </div>
+  </div>
+</div>
+<!-- S3 What is ADK -->
+<div class="slide">
+  <div class="tag">Foundation · Google Agent Development Kit</div>
+  <h2>What is Google ADK?</h2>
+  <div class="cards">
+    <div class="card">
+      <div class="card-icon">🏗️</div><h3>A Framework for Agents</h3>
+      <p>ADK (Agent Development Kit) is Google's open-source framework for building AI agents — systems where LLMs can plan, reason, and take actions.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">🔧</div><h3>Tools = Real Actions</h3>
+      <p>ADK lets you connect the LLM to Python functions (tools). The model can call these tools to search, calculate, run code, or call APIs.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">🔄</div><h3>Agentic Loop</h3>
+      <p>ADK implements Reason → Act → Observe cycles. The model thinks, calls a tool, sees the result, then thinks again until the task is done.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">🤝</div><h3>Multi-Agent</h3>
+      <p>Multiple specialized agents can collaborate. An Orchestrator delegates subtasks to expert agents — like a team of AI specialists.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">📡</div><h3>Streaming</h3>
+      <p>ADK supports real-time token streaming so users see the AI reasoning live — not just a final answer after a long wait.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">🔓</div><h3>Open Source</h3>
+      <p>Free to use. Works with Gemini, GPT, Claude, and — as we'll show — local models via Ollama.</p>
+    </div>
+  </div>
+</div>
+<!-- S4 LLM + ADK -->
+<div class="slide">
+  <div class="tag">Foundation · LLM + ADK = Agents</div>
+  <h2>LLM + ADK = Real Intelligence</h2>
+  <div class="flow" style="margin-bottom:28px">
+    <div class="fbox"><div class="fi">🤖</div><div class="fl">LLM<br><span style="color:#f87171;font-size:.7rem">text only</span></div></div>
+    <div class="arr">+</div>
+    <div class="fbox"><div class="fi">🏗️</div><div class="fl">ADK<br><span style="color:#f87171;font-size:.7rem">no brain</span></div></div>
+    <div class="arr">=</div>
+    <div class="fbox" style="border-color:rgba(52,211,153,.4);background:rgba(52,211,153,.06)"><div class="fi">⚡</div><div class="fl">Agent<br><span style="color:#34d399;font-size:.7rem">thinks + acts</span></div></div>
+  </div>
+  <ul class="list" style="max-width:860px">
+    <li><span class="num">1</span><div><strong>User sends a question</strong> — ADK passes it to the LLM with a system prompt listing available tools.</div></li>
+    <li><span class="num">2</span><div><strong>LLM reasons and picks a tool</strong> — Instead of guessing, it outputs a structured tool call: <code style="color:#a78bfa">TOOL_CALL: {"tool": "calculator", "args": {"expression": "17*23"}}</code></div></li>
+    <li><span class="num">3</span><div><strong>ADK executes the real tool</strong> — The Python function runs and returns <code style="color:#34d399">391</code>. The result is fed back to the LLM.</div></li>
+    <li><span class="num">4</span><div><strong>LLM synthesizes the answer</strong> — "17 × 23 = <strong>391</strong>" — now factually correct because it used a real calculator, not a guess.</div></li>
+  </ul>
+</div>
+<!-- S5 Why (was S2) -->
+<div class="slide">
+  <div class="tag">Recommendation</div>
+  <h2>Why This Demonstration?</h2>
+  <table class="cmp-table">
+    <tr><th>Feature</th><th>ADK Playground</th><th>Ollama Chat</th><th>✅ ADK + Ollama</th></tr>
+    <tr><td>Uses ADK Patterns</td><td><span class="badge bg-g">✓</span></td><td><span class="badge bg-r">✗</span></td><td><span class="badge bg-g">✓ Real</span></td></tr>
+    <tr><td>Runs Locally</td><td><span class="badge bg-r">Cloud</span></td><td><span class="badge bg-g">✓</span></td><td><span class="badge bg-g">✓</span></td></tr>
+    <tr><td>Real Tool Execution</td><td><span class="badge bg-y">Simulated</span></td><td><span class="badge bg-r">✗</span></td><td><span class="badge bg-g">✓</span></td></tr>
+    <tr><td>Python Backend</td><td><span class="badge bg-r">✗</span></td><td><span class="badge bg-r">✗</span></td><td><span class="badge bg-g">FastAPI</span></td></tr>
+    <tr><td>API Cost</td><td><span class="badge bg-r">Pay/token</span></td><td><span class="badge bg-g">Free</span></td><td><span class="badge bg-g">Free</span></td></tr>
+  </table>
+</div>
+<!-- S3 Overview -->
+<div class="slide">
+  <div class="tag">Project Overview</div>
+  <h2>What We Built</h2>
+  <ul class="list">
+    <li><span class="num">01</span><div><strong>Multi-Agent System</strong> — 3 specialized agents: Research, Code, Orchestrator</div></li>
+    <li><span class="num">02</span><div><strong>5 Real Tools</strong> — Calculator, Python runner, Knowledge search, Time, Text analyzer</div></li>
+    <li><span class="num">03</span><div><strong>Streaming Backend</strong> — FastAPI with Server-Sent Events, tokens arrive in real time</div></li>
+    <li><span class="num">04</span><div><strong>Zero Cloud</strong> — Llama 3.2 runs locally via Ollama on port 11434</div></li>
+    <li><span class="num">05</span><div><strong>Pure HTML/JS Frontend</strong> — No framework, no npm, runs in any browser</div></li>
+  </ul>
+</div>
+<!-- S4 Architecture -->
+<div class="slide">
+  <div class="tag">Architecture</div>
+  <h2>System Architecture</h2>
+  <div class="flow">
+    <div class="fbox"><div class="fi">🌐</div><div class="fl">Browser<br>:8081</div></div>
+    <div class="arr">→</div>
+    <div class="fbox"><div class="fi">⚡</div><div class="fl">FastAPI<br>:8000</div></div>
+    <div class="arr">→</div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div class="fbox"><div class="fi">🔬</div><div class="fl">Research Agent</div></div>
+      <div class="fbox"><div class="fi">💻</div><div class="fl">Code Agent</div></div>
+      <div class="fbox"><div class="fi">🤖</div><div class="fl">Orchestrator</div></div>
+    </div>
+    <div class="arr">→</div>
+    <div class="fbox"><div class="fi">🔧</div><div class="fl">5 Tools<br>(Python fns)</div></div>
+    <div class="arr">→</div>
+    <div class="fbox"><div class="fi">🦙</div><div class="fl">Ollama<br>Llama 3.2</div></div>
+  </div>
+</div>
+<!-- S5 Tech Stack -->
+<div class="slide">
+  <div class="tag">Technology Stack</div>
+  <h2>Technologies Used</h2>
+  <div class="cards">
+    <div class="card"><div class="card-icon">🐍</div><h3>Python 3.11+</h3><p>Core backend language</p></div>
+    <div class="card"><div class="card-icon">⚡</div><h3>FastAPI + uvicorn</h3><p>REST API with SSE streaming</p></div>
+    <div class="card"><div class="card-icon">🦙</div><h3>Ollama</h3><p>Local LLM runtime · Llama 3.2</p></div>
+    <div class="card"><div class="card-icon">🤖</div><h3>ADK Patterns</h3><p>Agent + Tool + Orchestration</p></div>
+    <div class="card"><div class="card-icon">📡</div><h3>httpx</h3><p>Async Ollama communication</p></div>
+    <div class="card"><div class="card-icon">🌐</div><h3>HTML/CSS/JS</h3><p>Zero-dependency frontend</p></div>
+  </div>
+</div>
+<!-- S6 Agents -->
+<div class="slide">
+  <div class="tag">Agents</div>
+  <h2>Three Specialized Agents</h2>
+  <div class="cards">
+    <div class="card">
+      <div class="card-icon">🔬</div><h3>Research Agent</h3>
+      <p>Tools: search_knowledge_base, calculator, analyze_text, get_current_time<br><br>Use case: Fact-finding, knowledge Q&amp;A, synthesis</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">💻</div><h3>Code Agent</h3>
+      <p>Tools: run_python_code, calculator, get_current_time<br><br>Use case: Code generation, real execution, debugging</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">🤖</div><h3>Orchestrator</h3>
+      <p>Tools: ALL 5 tools available<br><br>Use case: Complex multi-step tasks, delegates subtasks to sub-agents</p>
+    </div>
+  </div>
+</div>
+<!-- S7 Tools -->
+<div class="slide">
+  <div class="tag">Tools</div>
+  <h2>5 Real Execution Tools</h2>
+  <ul class="list">
+    <li><span>🧮</span><div><strong>calculator(expression)</strong> — Evaluates real math: sqrt(144), 1234×5678, pi×r²</div></li>
+    <li><span>🔍</span><div><strong>search_knowledge_base(query)</strong> — Returns structured AI knowledge on LLMs, RAG, ADK</div></li>
+    <li><span>🐍</span><div><strong>run_python_code(code)</strong> — Executes Python via subprocess, returns real stdout</div></li>
+    <li><span>🕐</span><div><strong>get_current_time()</strong> — Returns current date, time, weekday as JSON</div></li>
+    <li><span>📊</span><div><strong>analyze_text(text)</strong> — Word count, sentences, reading time statistics</div></li>
+  </ul>
+</div>
+<!-- S8 Code agents.py -->
+<div class="slide">
+  <div class="tag">Code Walkthrough · agents.py</div>
+  <h2>Agent Definition Pattern</h2>
+  <div class="two-col" style="align-items:center">
+    <pre class="code">AGENTS = {
+  "research": {
+    "name": "Research Agent",
+    "model": "llama3.2",
+    "system_prompt": """You are a Research Agent.
+Use tools by outputting:
+TOOL_CALL: {"tool": "name", "args": {}}
+"""
+  }
+}
+
+def parse_tool_calls(text):
+    pattern = r'TOOL_CALL:\s*(\{[^}]+\})'
+    for match in re.finditer(pattern, text):
+        yield json.loads(match.group(1))</pre>
+    <ul class="list" style="max-width:380px">
+      <li><span>→</span><div>Agent picks tool via plain-text JSON tag</div></li>
+      <li><span>→</span><div>No special SDK — works with any LLM</div></li>
+      <li><span>→</span><div>System prompt engineers the behavior</div></li>
+      <li><span>→</span><div>Regex extracts tool calls from response</div></li>
+    </ul>
+  </div>
+</div>
+<!-- S9 Code app.py -->
+<div class="slide">
+  <div class="tag">Code Walkthrough · app.py</div>
+  <h2>Agentic Tool-Use Loop</h2>
+  <pre class="code">async def agent_run(agent_id, user_message, history):
+    messages = [system_prompt, *history, user_message]
+
+    for round in range(MAX_TOOL_ROUNDS):   # max 5 rounds
+        full_response = ""
+
+        async for token in stream_ollama(model, messages):
+            full_response += token
+            yield sse("token", {"text": token})   # stream to browser
+
+        tool_calls = parse_tool_calls(full_response)
+        if not tool_calls:
+            yield sse("done", {"message": full_response})
+            break                                  # final answer ✓
+
+        for call in tool_calls:
+            result = execute_tool(call["tool"], call["args"])
+            yield sse("tool_result", {"result": result})
+
+        messages.append({"role":"user","content": result})  # feed back</pre>
+</div>
+<!-- S10 Frontend -->
+<div class="slide">
+  <div class="tag">Frontend</div>
+  <h2>HTML/JS Frontend Features</h2>
+  <div class="cards">
+    <div class="card"><div class="card-icon">🟢</div><h3>Live Status</h3><p>Polls /api/health on load — shows Ollama online/offline</p></div>
+    <div class="card"><div class="card-icon">🤖</div><h3>Agent Cards</h3><p>Dynamically loaded from /api/agents endpoint</p></div>
+    <div class="card"><div class="card-icon">📡</div><h3>SSE Streaming</h3><p>EventSource reads tokens as they arrive in real time</p></div>
+    <div class="card"><div class="card-icon">🔧</div><h3>Tool Visualizer</h3><p>Shows tool name, args, result inline during generation</p></div>
+    <div class="card"><div class="card-icon">🎨</div><h3>Dark UI</h3><p>CSS gradients, blur, animations — no framework needed</p></div>
+    <div class="card"><div class="card-icon">💬</div><h3>History</h3><p>Conversation history sent with every request for context</p></div>
+  </div>
+</div>
+<!-- S11 Flow -->
+<div class="slide">
+  <div class="tag">End-to-End Flow</div>
+  <h2>Request Lifecycle</h2>
+  <ul class="list">
+    <li><span class="num">1</span><div>User types message → Frontend sends POST /api/chat/{agent_id}</div></li>
+    <li><span class="num">2</span><div>FastAPI builds message history + injects system prompt</div></li>
+    <li><span class="num">3</span><div>Streams Ollama /api/chat — tokens arrive one-by-one</div></li>
+    <li><span class="num">4</span><div>Agent outputs TOOL_CALL tag → Backend intercepts via regex</div></li>
+    <li><span class="num">5</span><div>Real Python tool executes → result fed back to model as context</div></li>
+    <li><span class="num">6</span><div>Loop repeats up to 5× → final answer streamed to browser</div></li>
+  </ul>
+</div>
+<!-- S12 Conclusion -->
+<div class="slide">
+  <div class="tag">Conclusion</div>
+  <h1>Key Takeaways</h1>
+  <div class="cards">
+    <div class="card"><div class="card-icon">🔒</div><h3>Privacy First</h3><p>LLM runs 100% locally — no data sent anywhere</p></div>
+    <div class="card"><div class="card-icon">💰</div><h3>Zero Cost</h3><p>No API fees — unlimited requests with local model</p></div>
+    <div class="card"><div class="card-icon">🤖</div><h3>Real ADK Patterns</h3><p>Multi-agent orchestration + real tool execution</p></div>
+    <div class="card"><div class="card-icon">⚡</div><h3>Production Ready</h3><p>FastAPI + SSE streaming + conversation history</p></div>
+  </div>
+  <p style="margin-top:28px;color:#4a5568;font-size:.85rem">Built with: Python · FastAPI · Ollama · Llama 3.2 · ADK Patterns · HTML/CSS/JS</p>
+</div>
+</div>
+
+<div class="nav">
+  <button onclick="prev()">← Prev</button>
+  <button onclick="next()">Next →</button>
+</div>
+<div class="slide-num" id="num">1 / 15</div>
+
+<script>
+const slides = document.querySelectorAll('.slide');
+const total = slides.length;
+let cur = 0;
+
+// Dual sync: BroadcastChannel + localStorage fallback
+let ch;
+try { ch = new BroadcastChannel('presenter_sync'); } catch(e) { ch = null; }
+
+// Listen for navigation coming FROM the presenter popup
+let lastIncomingTs = 0;
+if (ch) {
+  ch.onmessage = e => {
+    if (e.data.slide !== undefined && e.data.fromPresenter) {
+      goTo(e.data.slide, true);
+    }
+  };
+}
+setInterval(() => {
+  try {
+    const ts = parseInt(localStorage.getItem('presenter_ts_back') || '0');
+    if (ts !== lastIncomingTs) {
+      lastIncomingTs = ts;
+      const idx = parseInt(localStorage.getItem('presenter_slide_back') || '0');
+      goTo(idx, true);
+    }
+  } catch(e) {}
+}, 300);
+
+function syncSlide(idx, fromPresenter) {
+  if (fromPresenter) return; // don't echo back
+  if(ch) ch.postMessage({slide: idx});
+  try {
+    localStorage.setItem('presenter_slide', idx);
+    localStorage.setItem('presenter_ts', Date.now());
+  } catch(e) {}
+}
+
+function goTo(n, fromPresenter) {
+  slides[cur].classList.remove('active');
+  slides[cur].classList.add('prev');
+  const prev_idx = cur;
+  setTimeout(() => slides[prev_idx].classList.remove('prev'), 500);
+  cur = (n + total) % total;
+  slides.forEach(s => s.classList.remove('active'));
+  slides[cur].classList.add('active');
+  document.getElementById('num').textContent = (cur+1) + ' / ' + total;
+  document.getElementById('bar').style.width = ((cur+1)/total*100) + '%';
+  syncSlide(cur, fromPresenter);
+}
+function next() { goTo(cur+1); }
+function prev() { goTo(cur-1); }
+
+document.addEventListener('keydown', e => {
+  if(e.key==='ArrowRight'||e.key===' ') { e.preventDefault(); next(); }
+  if(e.key==='ArrowLeft') { e.preventDefault(); prev(); }
+});
+
+let presenterWin = null;
+function openPresenter() {
+  if (presenterWin && !presenterWin.closed) {
+    presenterWin.focus();
+    return;
+  }
+  const base = location.href.replace('slides.html','presenter.html');
+  const url = base + '?v=' + Date.now();
+  presenterWin = window.open(url, '_blank', 'width=720,height=750,left=0,top=0');
+}
+
+// Init
+document.getElementById('bar').style.width = (1/total*100)+'%';
+syncSlide(0);
+</script>
+</body>
+</html>
