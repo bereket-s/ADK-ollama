@@ -88,6 +88,7 @@ add_rect(s, 0, 5.525, 10, 0.1, CYAN)
 add_text(s, "ADK + OLLAMA", 0.5, 0.8, 9, 1, size=52, bold=True, color=PURPLE, align=PP_ALIGN.CENTER)
 add_text(s, "Local Multi-Agent AI System", 0.5, 1.85, 9, 0.6, size=22, bold=False, color=WHITE, align=PP_ALIGN.CENTER)
 add_text(s, "LLM Demonstration Using Google Agent Development Kit", 0.5, 2.4, 9, 0.4, size=13, color=GRAY, align=PP_ALIGN.CENTER)
+add_text(s, "https://github.com/bereket-s/ADK-ollama", 0.5, 2.75, 9, 0.4, size=12, color=CYAN, align=PP_ALIGN.CENTER)
 add_text(s, datetime.datetime.now().strftime("%B %Y"), 0.5, 4.8, 9, 0.4, size=11, color=GRAY, align=PP_ALIGN.CENTER)
 for x, (lbl, col) in enumerate([("🔒 100% Private",PURPLE),("⚡ No API Cost",CYAN),("🛠️ Real Tools",GREEN),("🤖 Multi-Agent",AMBER)]):
     add_rect(s, 0.7+x*2.2, 3.2, 2.0, 0.5, rgb(20,20,40))
@@ -303,6 +304,8 @@ for i,(icon,title,desc) in enumerate(results):
     add_rect(s, 0.3+col_idx*4.9, 1.65+row*1.4, 4.5, 1.2, rgb(10,12,25))
     add_text(s, f"{icon} {title}", 0.5+col_idx*4.9, 1.75+row*1.4, 4.1, 0.4, size=13, bold=True, color=WHITE)
     add_text(s, desc, 0.5+col_idx*4.9, 2.1+row*1.4, 4.1, 0.55, size=10, color=GRAY)
+add_text(s, "GitHub: https://github.com/bereket-s/ADK-ollama",
+         0.4, 4.6, 9.2, 0.4, size=12, bold=True, color=CYAN, align=PP_ALIGN.CENTER)
 add_text(s, "Built with: Python · FastAPI · Ollama · Llama 3.2 · ADK Patterns · HTML/CSS/JS",
          0.4, 4.9, 9.2, 0.4, size=9, color=GRAY, align=PP_ALIGN.CENTER)
 
